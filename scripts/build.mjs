@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
+import { gzipSync } from 'node:zlib';
+import { build } from 'esbuild';
+const root = resolve('.'); await rm('dist', { recursive: true, force: true }); await mkdir('dist/cjs', { recursive: true });
+await Promise.all([['esm', 'dist/index.js'], ['cjs', 'dist/cjs/index.js']].map(([format, outfile]) => build({ entryPoints: ['src/index.js'], outfile, bundle: true, minify: true, sourcemap: true, format, platform: 'neutral', target: 'es2020', external: ['react'], banner: { js: '"use client";' } })));
+await writeFile('dist/cjs/package.json', '{"type":"commonjs"}\n'); await copyFile('src/index.d.ts', 'dist/index.d.ts');
+const pkg = JSON.parse(await readFile('package.json', 'utf8')); assert.equal(pkg.browser, pkg.module); assert.equal(Object.keys(pkg.dependencies ?? {}).length, 0);
+const esm = await import(pathToFileURL(resolve(root, pkg.module))); const require = createRequire(resolve(root, 'package.json')); const cjs = require(resolve(root, pkg.main));
+for (const name of Object.keys(esm)) assert.ok(name in cjs, name); assert.ok(esm.default);
+await build({ entryPoints: [pkg.browser], bundle: true, write: false, platform: 'browser', format: 'esm', external: ['react'], logLevel: 'silent' });
+const size = gzipSync(await readFile(pkg.module)).length; assert.ok(size < 10240, 'Bundle exceeds 10 KiB gzip.'); console.log(`${pkg.name}: ${size} bytes gzip. ESM/CJS/browser entries verified; React external.`);

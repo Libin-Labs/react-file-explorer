@@ -1,0 +1,11 @@
+import type { CSSProperties, ReactElement, ReactNode } from 'react';
+export type EntryId = string | number;
+export interface FileEntry { id: EntryId; name: string; type?: 'file' | 'folder'; children?: readonly FileEntry[]; disabled?: boolean; readOnly?: boolean }
+export interface ExplorerProps<T extends FileEntry = FileEntry> { entries?: readonly T[]; defaultEntries?: readonly T[]; onEntriesChange?: (entries: T[], change: { type: 'rename'; id: EntryId; name: string }) => void; onRename?: (entry: T, name: string, options: { signal: AbortSignal }) => void | PromiseLike<unknown>; onOpen?: (entry: T) => void; expandedIds?: readonly EntryId[]; defaultExpandedIds?: readonly EntryId[]; onExpandedChange?: (ids: EntryId[], entry: T) => void; selectedIds?: readonly EntryId[]; defaultSelectedIds?: readonly EntryId[]; onSelectionChange?: (ids: EntryId[]) => void; query?: string; defaultQuery?: string; onQueryChange?: (query: string) => void; selectionMode?: 'single' | 'multiple'; showCheckboxes?: boolean; readOnly?: boolean; caseSensitiveNames?: boolean; height?: number; indent?: number; label?: string; emptyContent?: ReactNode; renderEntry?: (entry: T, state: { selected: boolean; expanded: boolean; depth: number; folder: boolean }) => ReactNode; className?: string; style?: CSSProperties }
+export function FileExplorer<T extends FileEntry = FileEntry>(props: ExplorerProps<T>): ReactElement;
+export default FileExplorer;
+export function isFolder(entry: FileEntry): boolean;
+export function validateName(name: string): string;
+export function renameEntry<T extends FileEntry>(entries: readonly T[], id: EntryId, name: string, options?: { caseSensitive?: boolean }): T[];
+export interface VisibleEntry<T extends FileEntry> { entry: T; depth: number; parentIndex: number; parentId: EntryId | null; index: number; rowIndex: number; folder: boolean; expanded: boolean; position: number; setSize: number }
+export function getVisibleEntries<T extends FileEntry>(entries: readonly T[], options?: { expandedIds?: readonly EntryId[]; query?: string }): { rows: VisibleEntry<T>[]; rowById: Map<EntryId, VisibleEntry<T>>; all: { entry: T; index: number; parentIndex: number; depth: number; folder: boolean }[]; byId: Map<EntryId, { entry: T; index: number; parentIndex: number; depth: number; folder: boolean }> };
